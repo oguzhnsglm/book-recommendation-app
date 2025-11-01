@@ -1,113 +1,141 @@
-# Kitap Öneri Uygulaması
+# Kitap Öneri Uygulaması 📚✨
 
-PyTorch gömlemeleri ile kitap benzerliği hesaplayan, Next.js tabanlı modern bir web arayüzüne sahip öneri ve katalog uygulaması. Veri akışı, Goodreads benzeri kaynaklardan Selenium ile kazıma (scraping), önişleme, gömme (embedding) çıkarımı ve web katmanında servis edilmesi aşamalarını içerir.
+Bu proje, “Şunu okudum, buna benzer ne önerirsin?” sorusuna teknik olarak cevap veren bir kitap öneri sistemi + web arayüzüdür.
 
-## İçindekiler
-- Genel Bakış
-- Mimari ve Teknolojiler
-- Özellikler
-- Veri Toplama (Scraping)
-- Önişleme ve Gömlemeler
-- Python CLI ve Öneri Mantığı
-- Web Uygulaması (Next.js)
-- API Uçları
-- Kurulum ve Çalıştırma
-- Geliştirme Notları
-- Güvenlik, Etik ve Yasal Hususlar
+Sistem iki parçadan oluşur:
 
-## Genel Bakış
-Bu depo iki ana parçadan oluşur:
-- `book-recommendation-app/`: Veri, scraping, önişleme, gömme çıkarımı ve öneri mantığının yer aldığı Python tarafı.
-- `book-recommendation-web/`: Next.js 14 App Router ile oluşturulmuş, API route’larının Python CLI’ı çağırdığı ve modern UI içeren web uygulaması.
+* **`book-recommendation-app/` (Python tarafı)**
+  Kitap verisini toplar, işler ve benzerlik hesabını yapar.
 
-## Mimari ve Teknolojiler
-- Gömme/Benzerlik: PyTorch tensör (`embeddings.pt`) + kosinüs benzerliği (scikit-learn)
-- Python veri işleme: `pandas`
-- Web arayüzü: Next.js 14 (App Router), React 18
-- API ↔ Python entegrasyonu: Node `child_process.spawn` ile `recommend.py` çağrısı, JSON çıktı
-- Scraping: Selenium (+ undetected-chromedriver) ile dinamik sayfa gezme ve CSV’ye yazma
-
-## Özellikler
-- Öneri araması: Yazılabilir kutu, yazdıkça başıyla eşleşen öneriler; yön tuşları + Enter ile seçim
-- Kitaplar sayfası: Kategoriye göre filtreleme, puana göre sıralama, başlık araması, rate eden kişi sayısı gösterimi
-- Yazar sayfası: Yazara tıklayınca o yazara ait kitapların listesi
-- Listelerim: “Okuyacaklarım” ve “Okuduklarım” (localStorage ile istemci tarafında saklanır)
-- Açık renk tema, buton ve kartlarda hover/klik animasyonları
-
-## Veri Toplama (Scraping)
-- Dosya: `book-recommendation-app/scraping.py:1`
-- Kullanım: Selenium + undetected-chromedriver ile siteye giriş yapar, seçili liste/katagorideki kitapların detaylarını gezerek aşağıdaki başlıklarla CSV’ye ekler:
-  - `Genre`, `Book Name`, `Rating`, `Vote Count`, `Review Count`, `Summary`, `Author`
-- Notlar:
-  - Script örnek olarak bir roman listesi sayfasını dolaşacak şekilde yazılmıştır. Başlangıç URL’leri ve sayfa gezme mantığı (Next butonu) mevcuttur.
-  - Kullanıcı adı/şifre alanları örnektir. Dışarıdan çevresel değişkenlerle alınması önerilir (örn. `GOODREADS_EMAIL`, `GOODREADS_PASSWORD`).
-  - Büyük veri çekimlerinde hız/etik/dosya bütünlüğü için beklemeler, hata yakalama ve kısmi yazma (flush) uygulanmıştır.
-
-## Önişleme ve Gömlemeler
-- Önişleme: `book-recommendation-app/preprocessing.py:1`
-  - Eksik alanlı ve Latin dışı karakterler içeren satırlar temizlenir
-  - Yinelenen (Book Name + Rating) kayıtlar tekilleştirilir
-  - Sonuç geri `books.csv` olarak yazılır
-- Gömme çıkarımı: `book-recommendation-app/model.ipynb` (örnek çalışma defteri)
-  - Çıktı: `embeddings.pt` (şu an 6091 x 384 boyutlu bir tensör)
-  - Not: Embedding üretimi bu depoda offline yapılmış kabul edilir. Defteri açıp uygun bir cümle gömme modelinden (örn. başlık/özetlerden) embedding üretip `pt` olarak kaydedebilirsiniz.
-
-## Python CLI ve Öneri Mantığı
-- Dosya: `book-recommendation-app/recommend.py:1`
-- Yetenekler:
-  - `--list-books`: Sadece kitap adlarının listesi (JSON array)
-  - `--list-all`: Tüm katalog kayıtları (JSON array). Kolonlara ek olarak aşağıdakileri türetir:
-    - `RatingValue` (sayısal), `RatingsCount`, `ReviewsCount`
-  - `--book "<başlık>" --top N`: Verilen kitaba benzer ilk N öneri
-- Benzerlik: `cosine_similarity(emb[idx], emb)`; aynı kayıt filtrelenir, skorlar büyükten küçüğe sıralanır
-
-## Web Uygulaması (Next.js)
-- Klasör: `book-recommendation-web/`
-- Sayfalar:
-  - `app/recommend/page.jsx:1`: Öneri araması (dropdown/combobox deneyimi)
-  - `app/books/page.jsx:1`: Katalog, filtre/sıralama ve rate sayısı
-  - `app/author/[name]/page.jsx:1`: Yazarın kitapları
-  - `app/my-books/page.jsx:1`: Okuyacaklarım ve Okuduklarım listeleri
-  - `app/layout.jsx:1`: Navbar ve temel iskelet
-  - `app/page.jsx:1`: `/recommend`’e yönlendirme
-- Stil: `app/globals.css:1` (açık tema, animasyonlar, grid/kart tasarımı)
-- Python entegrasyonu: `lib/runPython.js:1`
-  - Next API, `child_process.spawn` ile `book-recommendation-app/recommend.py`’i çalıştırır; `PYTHONIOENCODING=utf-8` ile JSON okunur
-
-## API Uçları
-- `GET /api/books` → `--list-books` (sadece başlıklar)
-- `GET /api/catalog` → `--list-all` (tüm alanlar + türetilen metrikler)
-- `GET /api/recommend?book=…&top=…` → `--book`/`--top`
-
-## Kurulum ve Çalıştırma
-Önkoşullar: Python 3.9+ ve Node.js 18+
-
-1) Python bağımlılıkları (öneri motoru):
-- `pip install torch pandas scikit-learn`
-- Scraping için: `pip install selenium undetected-chromedriver`
-
-2) Veriler
-- Katalog: `book-recommendation-app/books.csv`
-- Gömlemeler: `book-recommendation-app/embeddings.pt`
-- Doğrulama:
-  - `python book-recommendation-app/recommend.py --book "1984" --top 5`
-
-3) Web uygulaması
-- `cd book-recommendation-web`
-- `npm install`
-- Geliştirme: `npm run dev` → `http://localhost:3000`
-- Üretim: `npm run build && npm start`
-
-## Geliştirme Notları
-- Windows’ta Python komutu `python`, Unix’te `python3` olabilir; `lib/runPython.js` bu farkı ele alır.
-- Serverless dağıtımlarda harici Python çalıştırmak zordur; klasik VM/Container üzerinde barındırma önerilir.
-- “Listelerim” verisi istemci tarafında `localStorage` ile saklanır (oturumlar arası kalıcı, cihazlar arası senkron değildir).
-
-## Güvenlik, Etik ve Yasal Hususlar
-- Scraping yaparken hedef sitenin Kullanım Koşulları’na, robots.txt ve hız/istek sınırlarına uyun.
-- Gerekirse yazılımı sadece kendi verileriniz veya açık lisanslı kaynaklarla kullanın.
-- Kimlik bilgilerini kod içinde tutmayın; ortam değişkenleri ve gizli yönetimi kullanın.
+* **`book-recommendation-web/` (Next.js tarafı)**
+  Kullanıcıya arama / filtreleme / öneri deneyimini sunar.
 
 ---
-Her türlü ek özellik (sunucu tarafı önbellekleme, sayfalama, gelişmiş filtreler, kullanıcı oturumu ile listelerin sunucuda saklanması) için yardımcı olabilirim.
 
+## 1. Projenin Amacı
+
+* Kitap sitelerinden (Goodreads tarzı) kitapları otomatik çek (scraping).
+* Her kitabı sayısal olarak temsil et (embedding).
+* Kullanıcının seçtiği bir kitaba en çok benzeyen diğer kitapları sırala.
+* Bunları modern bir web arayüzünde göster.
+
+Yani:
+
+> “1984”ü seviyorsan, en yakın his olarak ne okumak istersin?
+> Bunu otomatik olarak cevaplıyoruz.
+
+---
+
+## 2. Mimari Nasıl Çalışıyor?
+
+### 2.1 Veri Toplama (Scraping)
+
+* `scraping.py` Selenium kullanarak kitap sayfalarını dolaşır.
+* Şu bilgileri çeker:
+
+  * Kitap adı
+  * Yazar
+  * Tür / kategori
+  * Ortalama puan
+  * Kaç kişi oy vermiş
+  * Özet / açıklama
+* Bu kayıtlar CSV olarak saklanır (`books.csv`).
+
+> Bu kısım temel olarak küçük bir “mini Goodreads kazıyıcı” gibi çalışır.
+
+---
+
+### 2.2 Embedding ve Benzerlik
+
+* Her kitap için bir vektör (embedding) üretiyoruz ve `embeddings.pt` adlı PyTorch tensörüne kaydediyoruz.
+
+* Bu vektörler, kitabın içeriğini / tarzını sayısal olarak temsil ediyor.
+  Benzer kitaplar = vektörü birbirine yakın olanlar.
+
+* `recommend.py` komut satırından çalışıyor:
+
+  * `--book "<isim>" --top 5` → En benzer 5 kitabı döndür
+  * Çıktı JSON formatında
+
+Teknik olarak benzerliği şöyle buluyoruz:
+
+* `cosine_similarity(embedding[seçilen_kitap], embedding[tüm_kitaplar])`
+* En yüksek skoru alanlar öneri olarak sunuluyor.
+
+---
+
+### 2.3 Web Arayüzü (Next.js)
+
+* `book-recommendation-web/` klasöründeki Next.js uygulaması kullanıcı tarafını yönetir.
+
+* Özellikler:
+
+  * Arama kutusu: yazdıkça kitap başlıklarını önerir
+  * “Benzerlerini göster” paneli
+  * Kitap listesi sayfası: puana göre sıralama, türe göre filtreleme
+  * Yazar sayfası: bir yazara ait tüm kitapları listeleme
+  * “Okuyacağım / Okudum” listeleri (localStorage ile tutuluyor, hesap açmadan çalışır)
+
+* Next.js tarafındaki API route’ları doğrudan Python scriptini çağırır.
+  Yani frontend şunu yapar:
+
+  1. `/api/recommend?book=1984&top=5` isteğini yollar
+  2. Sunucu tarafında Node.js, `recommend.py`’i `child_process.spawn` ile çalıştırır
+  3. Python JSON döndürür
+  4. Bu JSON sayfada kullanıcıya gösterilir
+
+Bu sayede canlı öneri alıyormuşsun gibi hissediyorsun, ama aslında arkada komut satırı scripti dönüyor 🙂
+
+---
+
+## 3. Klasör Yapısı
+
+```text
+kitap/
+├─ book-recommendation-app/        # Python tarafı (scraping + öneri motoru)
+│  ├─ scraping.py                  # Selenium ile veri çekme
+│  ├─ preprocessing.py             # Temizlik, tekilleştirme, CSV hazırlama
+│  ├─ recommend.py                 # Benzer kitap önerisi (CLI + JSON out)
+│  ├─ books.csv                    # İşlenmiş kitap verisi
+│  ├─ embeddings.pt                # Her kitabın embedding vektörü (PyTorch)
+│  └─ model.ipynb                  # Embedding üretim süreci (notebook)
+│
+└─ book-recommendation-web/        # Next.js arayüzü
+   ├─ app/                         # App Router sayfaları
+   │  ├─ recommend/                # Kitap seç + benzerlerini göster
+   │  ├─ books/                    # Katalog + filtre/sıralama
+   │  ├─ author/[name]/            # Yazar detay sayfası
+   │  └─ my-books/                 # Kullanıcının listeleri (localStorage)
+   ├─ app/api/                     # API uçları (Python çağrıları buradan)
+   └─ lib/runPython.js             # Python scriptini Node tarafında çalıştırır
+```
+
+---
+
+## 4. Çalıştırma (Lokal Geliştirme)
+
+### Python tarafı
+
+```bash
+cd book-recommendation-app
+pip install torch pandas scikit-learn selenium undetected-chromedriver
+python recommend.py --book "1984" --top 5
+```
+
+Bu komut, “1984” kitabına benzeyen diğer kitapları JSON olarak yazdırır.
+
+### Web tarafı
+
+```bash
+cd book-recommendation-web
+npm install
+npm run dev
+```
+
+Tarayıcıda aç:
+`http://localhost:3000`
+
+* `/recommend` sayfasında kitap seçince anında önerileri görebilirsin.
+* `/books` sayfasında katalogu gezebilirsin.
+
+---
