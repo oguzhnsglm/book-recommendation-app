@@ -1,0 +1,114 @@
+:root {
+  --bg: #f6f8fb;
+  --panel: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --accent: #2563eb;
+  --accent-2: #16a34a;
+  --border: #e2e8f0;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.subtitle { color: var(--muted); margin-top: 6px; }
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+}
+
+.searchbar { display: flex; gap: 12px; align-items: center; }
+.input {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 14px 14px;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.input:focus {
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+}
+.button {
+  background: linear-gradient(135deg, var(--accent), #3b82f6);
+  color: #ffffff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+  box-shadow: 0 8px 16px rgba(59, 130, 246, 0.25);
+}
+.button:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(59,130,246,0.3); }
+.button:active { transform: translateY(0); opacity: 0.9; }
+.button.ghost { background: #ffffff; color: var(--accent); border: 1px solid var(--border); box-shadow: none; }
+.button.ghost:hover { background: #f1f5f9; box-shadow: none; }
+.button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.muted { color: var(--muted); }
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.tag { font-size: 12px; color: var(--muted); border: 1px solid var(--border); padding: 6px 10px; border-radius: 999px; }
+
+.grid { display: grid; grid-template-columns: repeat(1, minmax(0,1fr)); gap: 14px; margin-top: 18px; }
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (min-width: 980px) { .grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+
+.card { background: #ffffff; border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; transition: transform 200ms ease, box-shadow 200ms ease; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+.card h3 { margin: 0; font-size: 16px; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rating { color: var(--accent-2); font-weight: 700; }
+.sim { color: var(--muted); font-size: 12px; }
+
+.suggest { position: relative; }
+.suggest-list { position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid var(--border); border-radius: 12px; margin-top: 6px; max-height: 260px; overflow: auto; z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.06); }
+.suggest-item { padding: 10px 12px; cursor: pointer; }
+.suggest-item:hover { background: #f1f5f9; }
+.suggest-item.active { background: #0f172a; }
+.suggest-item.active { background: #e2e8f0; }
+
+.select-input { padding-right: 12px; }
+
+/* Navbar */
+.navbar { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+.nav-inner { max-width: 1100px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 12px; }
+.brand { font-weight: 800; color: var(--accent); text-decoration: none; }
+.spacer { flex: 1; }
+.navlink { color: var(--text); text-decoration: none; font-weight: 600; border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; transition: background 160ms ease, transform 150ms ease; }
+.navlink:hover { background: #eef2ff; transform: translateY(-1px); }
+
+main { display: block; }
+
+.link { color: #334155; text-decoration: none; }
+.link:hover { text-decoration: underline; }
